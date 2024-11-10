@@ -1,0 +1,104 @@
+#   Authors:        Aidan Whitman, Noah Herron
+#   Date:           11/09/2024
+#   Professor:      Professor Shannigrahi
+#   Assignment:     Program 3
+#   Description:    This program is the server for the detection system.
+
+#Imports
+import argparse
+import socket
+import sys
+import threading
+import json
+
+def handle_client(data, addr, log_location, udp_socket):
+    try:
+        #Decodes the data and parse the JSON file
+        message = data.decode()
+        parsed_data = json.loads(message)
+
+        #Prints
+        print(f"Received message from {addr}: {data.decode()}")
+
+        #Logs
+        with open(log_location, 'a') as log_file:
+            log_file.write(f"Received from {addr[0]}: {data.decode()}\n")
+
+        #Process based on message type
+        if parsed_data.get("type") == "HELLO":
+            response = json.dumps({"status": "200 OK", "message": "Hello received"})
+        elif parsed_data.get("type") == "DATA":
+            #Extract the data
+            duration = parsed_data.get("duration")
+            num_blinks = parsed_data.get("num_blinks")
+
+            if duration is not None and num_blinks is not None:
+                #Acknowledge the data
+                response = json.dumps({"status": "200 OK", "message": "Data received"})
+
+                with open(log_location, 'a') as log_file:
+                    log_file.write(f"Acknowledged data from {addr[0]}: {duration}, {num_blinks}\n")
+
+            else:
+                response = json.dumps({"status": "400 Bad Request", "message": "Missing duration or num_blinks"})
+        
+        elif parsed_data.get("type") == "MOTION":
+            #Handle motion data
+            response = json.dumps({"status": "200 OK", "message": "Motion data received"})
+
+        else:
+            response = json.dumps({"status": "400 Bad Request", "message": "Invalid message type"})
+
+        #Send the response
+        udp_socket.sendto(response.encode(), addr)
+
+    except json.JSONDecodeError:
+        #Handle JSON decode error
+        error_response = json.dumps({"status": "400 Bad Request", "message": "Invalid JSON"})
+        udp_socket.sendto(error_response.encode(), addr)
+    
+#Main Function
+def main():
+    #Parse the arguments
+    parser = argparse.ArgumentParser(description='Light Server')
+
+    #Define the arguments
+    parser.add_argument('port', type=int, help='Port to connect to')
+    parser.add_argument('log_location', type=str, help='Location to store logs')
+
+    #Parse the arguments
+    args = parser.parse_args()
+
+    #Retrieve the arguments
+    port = args.port
+    log_location = args.log_location
+
+    #Print the arguments
+    print(f"Port: {port}")
+    print(f"Log Location: {log_location}")
+
+    #Validate the port number
+    if not (1 <= port <= 65535):
+        print("Error: Port number must be between 1 and 65535.")
+        sys.exit(1)
+
+    #Set up the UDP socket
+    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    udp_socket.bind(('0.0.0.0', port))
+
+    print(f"UDP server is listening on port {port}...")
+    
+    #Main loop
+    try:
+        while True:
+            #Handle the clients
+            data, addr = udp_socket.recvfrom(1024)
+            client_thread = threading.Thread(target=handle_client, args=(data, addr, log_location, udp_socket))
+            client_thread.start()
+
+    except KeyboardInterrupt:
+        print("Keyboard Interrupt")
+
+#Run the main function
+if __name__ == '__main__':
+    main()
