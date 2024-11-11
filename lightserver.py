@@ -10,6 +10,20 @@ import socket
 import sys
 import threading
 import json
+import RPi.GPIO as GPIO
+import time
+
+#Constants
+LED_PIN = 18
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LED_PIN, GPIO.OUT)
+
+def blink_led(duration, num_blinks):
+    for _ in range(num_blinks):
+        GPIO.output(LED_PIN, GPIO.HIGH)
+        time.sleep(duration)
+        GPIO.output(LED_PIN, GPIO.LOW)
+        time.sleep(duration)
 
 def handle_client(data, addr, log_location, udp_socket):
     try:
@@ -44,6 +58,15 @@ def handle_client(data, addr, log_location, udp_socket):
         
         elif parsed_data.get("type") == "MOTION":
             #Handle motion data
+            print("Motion detected")
+            with open(log_location, 'a') as log_file:
+                log_file.write(f"Motion Detected\n")
+
+            #Blink the LED
+            blink_times = parsed_data.get("num_blinks", 5)
+            blink_duration = parsed_data.get("duration", 0.5)
+            blink_led(blink_duration, blink_times)
+
             response = json.dumps({"status": "200 OK", "message": "Motion data received"})
 
         else:
@@ -98,6 +121,11 @@ def main():
 
     except KeyboardInterrupt:
         print("Keyboard Interrupt")
+
+    finally:
+        #Close the socket
+        udp_socket.close()
+        GPIO.cleanup()
 
 #Run the main function
 if __name__ == '__main__':

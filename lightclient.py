@@ -22,18 +22,23 @@ PIR_PIN = 17
 GPIO.setup(PIR_PIN, GPIO.IN)
 
 #Send the motion signal
-def send_motion(server_ip, server_port, sock):
-    motion_data = {"type": "MOTION"}
+def send_motion(server_ip, server_port, log_location, sock):
+    motion_data = {"type": "MOTION", "message": "Motion Detected"}
+
+    #Log the motion
+    with open(log_location, 'a') as log_file:
+        log_file.write(f"Motion detected at {time.strftime('%Y-%m-%d-%H:%M:%S')}\n")
+
     message = json.dumps(motion_data)
     sock.sendto(message.encode(), (server_ip, server_port))
     print("Motion data sent.")
 
 #Wait for the motion
-def wait(server_ip, server_port, sock):
+def wait(server_ip, server_port, log_location, sock):
     print("Waiting for motion...")
     while True:
         if GPIO.input(PIR_PIN):
-            send_motion(server_ip, server_port, sock)
+            send_motion(server_ip, server_port, log_location, sock)
             time.sleep(2)
         time.sleep(0.1)
 
@@ -109,6 +114,12 @@ def initiate_handshake(server_ip, server_port, duration, num_blinks):
     #Close the socket
     sock.close()
 
+#FIN packet
+def send_fin(sock, server_ip, server_port, sequence_number, ack_number):
+    fin_packet = create_header(sequence_number, ack_number, flags=0b100)
+    send_packet(sock, fin_packet, server_ip, server_port)
+    print("FIN packet sent.")
+
 #Main function
 def main():
     #Parse the arguments
@@ -135,16 +146,19 @@ def main():
 
     try:
         #Start the motion detection
-        wait(ip, port, sock)
+        wait(ip, port, log_location, sock)
 
     except KeyboardInterrupt:
         print("Exiting...")
-        GPIO.cleanup()
-        sys.exit()
 
     finally:
+        #Send the FIN packet
+        send_fin(sock, ip, port, 1002, 3)
+
+        #Close the socket
         GPIO.cleanup()
         sock.close()
+        sys.exit()
 
 if __name__ == '__main__':
     main()
