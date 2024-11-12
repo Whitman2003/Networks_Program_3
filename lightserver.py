@@ -28,6 +28,11 @@ def blink_led(duration, num_blinks):
 def handle_client(data, addr, log_location, udp_socket):
     try:
         #Decodes the data and parse the JSON file
+        headerLength = 12
+
+        header = data[:headerLength]
+        json_payload = data[headerLength:]
+
         message = data.decode()
         parsed_data = json.loads(message)
 
@@ -79,6 +84,9 @@ def handle_client(data, addr, log_location, udp_socket):
         #Handle JSON decode error
         error_response = json.dumps({"status": "400 Bad Request", "message": "Invalid JSON"})
         udp_socket.sendto(error_response.encode(), addr)
+
+    except UnicodeDecodeError as e:
+        print(f"UnicodeDecodeError: {e}")
     
 #Main Function
 def main():
