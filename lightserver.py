@@ -33,7 +33,7 @@ def handle_client(data, addr, log_location, udp_socket):
         header = data[:headerLength]
         json_payload = data[headerLength:]
 
-        message = data.decode()
+        message = json_payload.decode()
         parsed_data = json.loads(message)
 
         #Prints
