@@ -38,6 +38,7 @@ def send_motion(server_ip, server_port, log_location, sock):
 def wait(server_ip, server_port, log_location, sock):
     print("Waiting for motion...")
     while True:
+        print(f"PIR input: {GPIO.input(PIR_PIN)}")
         if GPIO.input(PIR_PIN):
             send_motion(server_ip, server_port, log_location, sock)
             time.sleep(2)
