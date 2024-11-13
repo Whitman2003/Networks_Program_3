@@ -123,7 +123,9 @@ def main():
     try:
         while True:
             #Handle the clients
+            print('Waiting for a client...')
             data, addr = udp_socket.recvfrom(1024)
+            print('Client connected:', addr)
             client_thread = threading.Thread(target=handle_client, args=(data, addr, log_location, udp_socket))
             client_thread.start()
 
