@@ -43,7 +43,7 @@ def handle_client(data, addr, log_location, udp_socket):
         parsed_data = json.loads(message)
 
         #Prints
-        print(f"Received message from {addr}: {data.decode()}")
+        print(f"Received message from {addr}: {message}")
 
         #Logs
         with open(log_location, 'a') as log_file:
