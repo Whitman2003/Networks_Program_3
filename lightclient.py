@@ -30,10 +30,19 @@ def send_motion(server_ip, server_port, log_location, sock):
     with open(log_location, 'a') as log_file:
         log_file.write(f"Motion detected at {time.strftime('%Y-%m-%d-%H:%M:%S')}\n")
 
-    message = json.dumps(motion_data)
-    print("Sending motion data...")
-    sock.sendto(message.encode(), (server_ip, server_port))
-    print("Motion data sent.")
+    message = json.dumps(motion_data).encode('utf-8')
+    print(f"Motion data: {message}")
+
+    if sock.fileno() != -1:
+        try:
+            print("Sending motion data...")
+            sock.sendto(message, (server_ip, server_port))
+            print("Motion data sent.")
+        except Exception as e:
+            print("Error sending motion data. {e}")
+    else:
+        print("Socket is invalid.")
+        return
 
 #Wait for the motion
 def wait(server_ip, server_port, log_location, sock):
