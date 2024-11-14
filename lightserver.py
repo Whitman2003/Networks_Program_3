@@ -39,6 +39,8 @@ def handle_client(data, addr, log_location, udp_socket):
         header = data[:headerLength]
         json_payload = data[headerLength:]
 
+        print(f"JSON Payload: {json_payload}")
+
         message = json_payload.decode('utf-8')
         parsed_data = json.loads(message)
 

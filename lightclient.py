@@ -70,7 +70,7 @@ def create_payload(duration, num_blinks, sequence_number, ack_number):
     data = {"duration": duration, "num_blinks": num_blinks}
 
     #Convert to a JSON string and encode
-    payload_data = json.dumps(data).encode()
+    payload_data = json.dumps(data).encode('utf-8')
 
     #Combine the header and payload
     full_payload = header + payload_data
