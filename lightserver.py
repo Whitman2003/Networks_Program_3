@@ -33,10 +33,13 @@ def handle_client(data, addr, log_location, udp_socket):
         #Decodes the data and parse the JSON file
         headerLength = 12
 
+        if len(data) < headerLength:
+            raise ValueError("Data is too short for JSON")
+
         header = data[:headerLength]
         json_payload = data[headerLength:]
 
-        message = json_payload.decode()
+        message = json_payload.decode('utf-8')
         parsed_data = json.loads(message)
 
         #Prints
