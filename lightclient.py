@@ -116,6 +116,13 @@ def initiate_handshake(server_ip, server_port, duration, num_blinks):
             send_packet(sock, ack_packet, server_ip, server_port)
             print("The handshake is complete and the last ACK has been sent.")
 
+            #Send HELLO
+            hello_data = {"type": "HELLO", "message": "Hello, server!"}
+            hello_message = json.dumps(hello_data).encode('utf-8')
+            print("Sending HELLO...")
+            sock.sendto(hello_message, (server_ip, server_port))
+            print("HELLO sent.")
+
             #Create the payload
             payload = create_payload(duration, num_blinks, sequence_number + 2, ack_number + 1)
             send_packet(sock, payload, server_ip, server_port)
