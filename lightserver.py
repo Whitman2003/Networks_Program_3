@@ -35,17 +35,22 @@ def handle_client(data, addr, log_location, udp_socket):
 
         if len(data) < headerLength:
             raise ValueError("Data is too short for JSON")
+            return
 
         header = data[:headerLength]
         json_payload = data[headerLength:]
 
         print(f"JSON Payload: {json_payload}")
 
-        message = json_payload.decode('utf-8')
-        parsed_data = json.loads(message)
+        if json_payload:
+            message = json_payload.decode('utf-8')
+            parsed_data = json.loads(message)
 
-        #Prints
-        print(f"Received message from {addr}: {message}")
+            #Prints
+            print(f"Received message from {addr}: {message}")
+
+        else:
+            raise ValueError("No JSON payload")
 
         #Logs
         with open(log_location, 'a') as log_file:
