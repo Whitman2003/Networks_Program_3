@@ -52,7 +52,6 @@ def wait(server_ip, server_port, log_location, sock):
         if GPIO.input(PIR_PIN):
             send_motion(server_ip, server_port, log_location, sock)
             time.sleep(2)
-            break
         time.sleep(0.1)
 
 #Payload Handling
@@ -117,7 +116,7 @@ def initiate_handshake(server_ip, server_port, duration, num_blinks):
             print("The handshake is complete and the last ACK has been sent.")
 
             #Send HELLO
-            hello_data = {"type": "HELLO", "message": "Hello, server!"}
+            hello_data = {"type": "HELLO", "message": "HELLO"}
             hello_message = json.dumps(hello_data).encode('utf-8')
             print("Sending HELLO...")
             sock.sendto(hello_message, (server_ip, server_port))
