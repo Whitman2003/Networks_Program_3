@@ -49,7 +49,7 @@ def handle_client(data, addr, log_location, udp_socket):
 
         #Logs
         with open(log_location, 'a') as log_file:
-            log_file.write(f"Received from {addr[0]}: {data.decode()}\n")
+            log_file.write(f"Received from {addr[0]}: {message}\n")
 
         #Process based on message type
         if parsed_data.get("type") == "HELLO":
@@ -88,7 +88,7 @@ def handle_client(data, addr, log_location, udp_socket):
             response = json.dumps({"status": "400 Bad Request", "message": "Invalid message type"})
 
         #Send the response
-        udp_socket.sendto(response.encode(), addr)
+        udp_socket.sendto(response.encode('utf-8'), addr)
         print(f"Sent response to {addr}: {response}")
 
     except json.JSONDecodeError:
@@ -138,8 +138,7 @@ def main():
             print('Waiting for a client...')
             data, addr = udp_socket.recvfrom(1024)
             print('Client connected:', addr)
-            client_thread = threading.Thread(target=handle_client, args=(data, addr, log_location, udp_socket))
-            client_thread.start()
+            handle_client(data, addr, log_location, udp_socket)
 
     except KeyboardInterrupt:
         print("Keyboard Interrupt")
