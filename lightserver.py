@@ -19,6 +19,8 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(LED_PIN, GPIO.OUT)
 
 def blink_led(duration, num_blinks):
+    #Blinking the LED
+    print("Blinking LED")
     for _ in range(num_blinks):
         GPIO.output(LED_PIN, GPIO.HIGH)
         time.sleep(duration)
@@ -26,6 +28,7 @@ def blink_led(duration, num_blinks):
         time.sleep(duration)
 
 def handle_client(data, addr, log_location, udp_socket):
+    print("Entered handle_client")
     try:
         #Decodes the data and parse the JSON file
         headerLength = 12
@@ -45,9 +48,11 @@ def handle_client(data, addr, log_location, udp_socket):
 
         #Process based on message type
         if parsed_data.get("type") == "HELLO":
+            print("Received HELLO")
             response = json.dumps({"status": "200 OK", "message": "Hello received"})
         elif parsed_data.get("type") == "DATA":
             #Extract the data
+            print("Received DATA")
             duration = parsed_data.get("duration")
             num_blinks = parsed_data.get("num_blinks")
 
@@ -79,9 +84,11 @@ def handle_client(data, addr, log_location, udp_socket):
 
         #Send the response
         udp_socket.sendto(response.encode(), addr)
+        print(f"Sent response to {addr}: {response}")
 
     except json.JSONDecodeError:
         #Handle JSON decode error
+        print("Invalid JSON")
         error_response = json.dumps({"status": "400 Bad Request", "message": "Invalid JSON"})
         udp_socket.sendto(error_response.encode(), addr)
 
@@ -134,6 +141,7 @@ def main():
 
     finally:
         #Close the socket
+        print("Closing the socket...")
         udp_socket.close()
         GPIO.cleanup()
 

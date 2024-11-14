@@ -31,6 +31,7 @@ def send_motion(server_ip, server_port, log_location, sock):
         log_file.write(f"Motion detected at {time.strftime('%Y-%m-%d-%H:%M:%S')}\n")
 
     message = json.dumps(motion_data)
+    print("Sending motion data...")
     sock.sendto(message.encode(), (server_ip, server_port))
     print("Motion data sent.")
 
@@ -57,6 +58,7 @@ def create_header(sequence_number, ack_number, flags):
 
 #Send the packet
 def send_packet(sock, payload, server_ip, server_port):
+    print("Sending packet...")
     sock.sendto(payload, (server_ip, server_port))
 
 #Create the payload
@@ -72,6 +74,7 @@ def create_payload(duration, num_blinks, sequence_number, ack_number):
 
     #Combine the header and payload
     full_payload = header + payload_data
+    print("Payload created.")
     return full_payload
 
 #Initialize the handshake
@@ -145,9 +148,11 @@ def main():
 
     #Use
     initiate_handshake(ip, port, duration, num_blinks)
+    print("Handshake complete.")
 
     try:
         #Start the motion detection
+        print("Starting motion detection...")
         wait(ip, port, log_location, sock)
 
     except KeyboardInterrupt:
@@ -155,6 +160,7 @@ def main():
 
     finally:
         #Send the FIN packet
+        print("Sending FIN packet...")
         send_fin(sock, ip, port, 1002, 3)
 
         #Close the socket
