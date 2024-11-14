@@ -52,6 +52,7 @@ def wait(server_ip, server_port, log_location, sock):
         if GPIO.input(PIR_PIN):
             send_motion(server_ip, server_port, log_location, sock)
             time.sleep(2)
+            break
         time.sleep(0.1)
 
 #Payload Handling
