@@ -44,6 +44,8 @@ def handle_client(data, addr, log_location, udp_socket):
         header = data[:headerLength]
         flags_field = struct.unpack('!I', header[8:12])[0] & 0b111
 
+        print(f"Check flags: {flags_field}")
+
         #SYN
         if flags_field == 0b001:
             print(f"Received SYN from {addr}. Sending SYN|ACK...")
