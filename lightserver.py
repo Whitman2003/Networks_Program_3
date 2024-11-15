@@ -28,8 +28,8 @@ def blink_led(duration, num_blinks):
         GPIO.output(LED_PIN, GPIO.LOW)
         time.sleep(duration)
 
-def creaet_header(sequence_number, ack_number, flags):
-    header = struct.pack('!II I', sequence_number, ack, flags)
+def create_header(sequence_number, ack_number, flags):
+    header = struct.pack('!II I', sequence_number, ack_number, flags)
     return header
 
 def handle_client(data, addr, log_location, udp_socket):
