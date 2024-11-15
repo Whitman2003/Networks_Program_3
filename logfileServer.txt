@@ -1,0 +1,18 @@
+RECV: Sequence Num: 1000 ACK Num: 1002 [SYN]
+SEND: Sequence Num: 1001 ACK Num: 1002 [SYN|ACK]
+RECV: Sequence Num: 1001 ACK Num: 1004 [ACK]
+RECV: Sequence Num: 1000 ACK Num: 1002 [ACK]
+Received message: {'type': 'MOTION', 'message': 'MOTION'}
+Motion detected at 2024-11-15-17:24:27
+RECV: Sequence Num: 1000 ACK Num: 1002 [ACK]
+Received message: {'type': 'MOTION', 'message': 'MOTION'}
+Motion detected at 2024-11-15-17:24:30
+RECV: Sequence Num: 1000 ACK Num: 1002 [ACK]
+Received message: {'type': 'MOTION', 'message': 'MOTION'}
+Motion detected at 2024-11-15-17:24:36
+RECV: Sequence Num: 1000 ACK Num: 1002 [ACK]
+Received message: {'type': 'MOTION', 'message': 'MOTION'}
+Motion detected at 2024-11-15-17:24:49
+RECV: Sequence Num: 1000 ACK Num: 1002 [ACK]
+Received message: {'type': 'MOTION', 'message': 'MOTION'}
+Motion detected at 2024-11-15-17:24:52

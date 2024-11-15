@@ -1,0 +1,9 @@
+SEND: Sequence Num: 1000 ACK Num: 1001 [SYN]
+RECV: Sequence Num: 1000 ACK Num: 1001 [SYN|ACK]
+SEND: Sequence Num: 1000 ACK Num: 1003 [ACK]
+Motion detected at 2024-11-15-17:24:27
+Motion detected at 2024-11-15-17:24:29
+Motion detected at 2024-11-15-17:24:36
+Motion detected at 2024-11-15-17:24:49
+Motion detected at 2024-11-15-17:24:51
+SEND: Sequence Num: 1002 ACK Num: 3 [FIN]
