@@ -12,6 +12,7 @@ import threading
 import json
 import RPi.GPIO as GPIO
 import time
+import struct
 
 #Constants
 LED_PIN = 18
@@ -35,75 +36,75 @@ def handle_client(data, addr, log_location, udp_socket):
 
         if len(data) < headerLength:
             raise ValueError("Data is too short for JSON")
-            return
 
         header = data[:headerLength]
-        json_payload = data[headerLength:]
+        flags_field = struct.unpack('!I', header[8:12])[0] & 0b111
 
-        print(f"JSON Payload: {json_payload}")
+        #SYN
+        if flags_field == 0b001:
+            print(f"Received SYN from {addr}. Sending SYN|ACK...")
+            sequence_number = struct.unpack('!I', header[:4])[0]
+            ack_number = struct.unpack('!I', header[4:8])[0] + 1
+            syn_ack_packet = create_header(sequence_number+1, ack_number, 0b011)
+            udp_socket.sendto(syn_ack_packet, addr)
 
-        if json_payload:
-            message = json_payload.decode('utf-8')
-            parsed_data = json.loads(message)
+        #ACK
+        elif flags_field == 0b010:
+            print(f"Received ACK from {addr}. Handshake complete.")
+            print("Connection established.")
 
-            #Prints
-            print(f"Received message from {addr}: {message}")
+            if len(data) > headerLength:
+                json_payload = data[headerLength:]
 
-        else:
-            raise ValueError("No JSON payload")
+                    #Decode
+                try:
+                    message = json.loads(json_payload.decode('utf-8'))
+                    print(f"Received message: {message}")
 
-        #Logs
-        with open(log_location, 'a') as log_file:
-            log_file.write(f"Received from {addr[0]}: {message}\n")
+                    with open(log_location, 'a') as log_file:
+                        log_file.write(f"Received message: {message}\n")
 
-        #Process based on message type
-        if parsed_data.get("type") == "HELLO":
-            print("Received HELLO")
-            response = json.dumps({"status": "200 OK", "message": "Hello received"})
-        elif parsed_data.get("type") == "DATA":
-            #Extract the data
-            print("Received DATA")
-            duration = parsed_data.get("duration")
-            num_blinks = parsed_data.get("num_blinks")
+                    if message.get("type") == "MOTION":
+                        print("Motion Detected.")
+                        with open(log_location, 'a') as log_file:
+                            log_file.write(f"Motion detected at {time.strftime('%Y-%m-%d-%H:%M:%S')}\n")
 
-            if duration is not None and num_blinks is not None:
-                #Acknowledge the data
-                response = json.dumps({"status": "200 OK", "message": "Data received"})
+                        #Blink the LED
+                        blink_times = message.get("num_blinks", 5)
+                        blink_duration = message.get("duration", 0.5)
+                        blink_led(blink_duration, blink_times)
 
-                with open(log_location, 'a') as log_file:
-                    log_file.write(f"Acknowledged data from {addr[0]}: {duration}, {num_blinks}\n")
+                        response = json.dumps({"status": "200 OK", "message": "Motion Detected"})
+
+                    elif message.get("type") == "DATA":
+                        print("Received data.")
+                        duration = message.get("duration")
+                        num_blinks = message.get("num_blinks")
+                    
+                        if duration is not None and num_blinks is not None:
+                            response = json.dumps({"status": "200 OK", "message": "LED blinked."})
+                            with open(log_location, 'a') as log_file:
+                                log_file.write(f"LED blinked {num_blinks} times for {duration} seconds.\n")
+                        else:
+                            response = json.dumps({"status": "400 Bad Request", "message": "Invalid message type."})
+                
+                    else:
+                        response = json.dumps({"status": "400 Bad Request", "message": "Invalid message type."})
+
+                    udp_socket.sendto(response.encode('utf-8'), addr)
+                    print(f"Sent response to {addr}: {response}")
+
+                except json.JSONDecodeError:
+                    print("Invalid JSON data.")
+                    error_response = json.dumps({"status": "400 Bad Request", "message": "Invalid JSON data."})
+                    udp_socket.sendto(error_response.encode('utf-8'), addr)
 
             else:
-                response = json.dumps({"status": "400 Bad Request", "message": "Missing duration or num_blinks"})
+                print(f"Received unexpected flags.")
+
+    except Exception as e:
+        print(f"Error handling client: {e}")
         
-        elif parsed_data.get("type") == "MOTION":
-            #Handle motion data
-            print("Motion detected")
-            with open(log_location, 'a') as log_file:
-                log_file.write(f"Motion Detected\n")
-
-            #Blink the LED
-            blink_times = parsed_data.get("num_blinks", 5)
-            blink_duration = parsed_data.get("duration", 0.5)
-            blink_led(blink_duration, blink_times)
-
-            response = json.dumps({"status": "200 OK", "message": "Motion data received"})
-
-        else:
-            response = json.dumps({"status": "400 Bad Request", "message": "Invalid message type"})
-
-        #Send the response
-        udp_socket.sendto(response.encode('utf-8'), addr)
-        print(f"Sent response to {addr}: {response}")
-
-    except json.JSONDecodeError:
-        #Handle JSON decode error
-        print("Invalid JSON")
-        error_response = json.dumps({"status": "400 Bad Request", "message": "Invalid JSON"})
-        udp_socket.sendto(error_response.encode(), addr)
-
-    except UnicodeDecodeError as e:
-        print(f"UnicodeDecodeError: {e}")
     
 #Main Function
 def main():
