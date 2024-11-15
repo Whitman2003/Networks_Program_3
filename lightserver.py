@@ -57,10 +57,11 @@ def handle_client(data, addr, log_location, udp_socket):
             print(f"Received ACK from {addr}. Handshake complete.")
             print("Connection established.")
 
+            print(f"Length of data: {len(data)}")
             if len(data) > headerLength:
                 json_payload = data[headerLength:]
 
-                    #Decode
+                #Decode
                 try:
                     message = json.loads(json_payload.decode('utf-8'))
                     print(f"Received message: {message}")

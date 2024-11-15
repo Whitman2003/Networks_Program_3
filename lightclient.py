@@ -24,7 +24,7 @@ GPIO.setup(PIR_PIN, GPIO.IN)
 #Send the motion signal
 def send_motion(server_ip, server_port, log_location, sock):
     print("Motion detected.")
-    motion_data = {"type": "MOTION", "message": "Motion Detected"}
+    motion_data = {"type": "MOTION", "message": "MOTION"}
 
     #Log the motion
     with open(log_location, 'a') as log_file:
