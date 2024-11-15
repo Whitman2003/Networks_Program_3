@@ -69,6 +69,7 @@ def handle_client(data, addr, log_location, udp_socket):
                     with open(log_location, 'a') as log_file:
                         log_file.write(f"Received message: {message}\n")
 
+                    print(f"Message type: {message.get('type')}")
                     if message.get("type") == "MOTION":
                         print("Motion Detected.")
                         with open(log_location, 'a') as log_file:
