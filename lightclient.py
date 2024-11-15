@@ -92,7 +92,7 @@ def create_payload(duration, num_blinks, sequence_number, ack_number):
     return full_payload
 
 #Initialize the handshake
-def initiate_handshake(server_ip, server_port, duration, num_blinks):
+def initiate_handshake(server_ip, server_port, duration, num_blinks, log_location):
     #Create the socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -102,12 +102,20 @@ def initiate_handshake(server_ip, server_port, duration, num_blinks):
     syn_packet = create_header(sequence_number, ack_number, flags=0b001)
     print("Sending SYN...")
     send_packet(sock, syn_packet, server_ip, server_port)
+    
+    #Log the SYN sent
+    with open(log_location, 'a') as log_file:
+        log_file.write(f"SEND: Sequence Num: {sequence_number} ACK Num: {ack_number} [SYN]\n")
 
     #Wait for SYN|ACK
     sock.settimeout(5)
     try:
         data, addr = sock.recvfrom(1024)
         print("Received SYN|ACK...")
+        
+        #Log the SYN|ACK recieved
+        with open(log_location, 'a') as log_file:
+            log_file.write(f"RECV: Sequence Num: {sequence_number} ACK Num: {ack_number} [SYN|ACK]\n")
 
         #Check if there are flags
         response_flags = struct.unpack('!I', data[8:12])[0] & 0b111
@@ -119,6 +127,10 @@ def initiate_handshake(server_ip, server_port, duration, num_blinks):
             ack_packet = create_header(sequence_number + 1, ack_number, flags=0b010)
             send_packet(sock, ack_packet, server_ip, server_port)
             print("The handshake is complete and the last ACK has been sent.")
+            
+            #Log the ACK sent
+            with open(log_location, 'a') as log_file:
+                log_file.write(f"SEND: Sequence Num: {sequence_number} ACK Num: {ack_number} [ACK]\n")
 
     except socket.timeout:
         print("The connection timed out.")
@@ -129,10 +141,14 @@ def initiate_handshake(server_ip, server_port, duration, num_blinks):
     sock.close()
 
 #FIN packet
-def send_fin(sock, server_ip, server_port, sequence_number, ack_number):
+def send_fin(sock, server_ip, server_port, sequence_number, ack_number, log_location):
     fin_packet = create_header(sequence_number, ack_number, flags=0b100)
     send_packet(sock, fin_packet, server_ip, server_port)
     print("FIN packet sent.")
+    
+    #Log the FIN sent
+    with open(log_location, 'a') as log_file:
+        log_file.write(f"SEND: Sequence Num: {sequence_number} ACK Num: {ack_number} [FIN]\n")
 
 #Main function
 def main():
@@ -144,7 +160,7 @@ def main():
     parser.add_argument('port', type=int, help='Port to connect to')
     parser.add_argument('log_location', type=str, help='Location to store logs')
     duration = 5
-    num_blinks = 5
+    num_blinks = 3
 
     #Parse the arguments
     args = parser.parse_args()
@@ -156,7 +172,7 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     #Use
-    initiate_handshake(ip, port, duration, num_blinks)
+    initiate_handshake(ip, port, duration, num_blinks, log_location)
     print("Handshake complete.")
 
     try:
@@ -170,7 +186,7 @@ def main():
     finally:
         #Send the FIN packet
         print("Sending FIN packet...")
-        send_fin(sock, ip, port, 1002, 3)
+        send_fin(sock, ip, port, 1002, 3, log_location)
 
         #Close the socket
         GPIO.cleanup()

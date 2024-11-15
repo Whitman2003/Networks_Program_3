@@ -48,6 +48,13 @@ def handle_client(data, addr, log_location, udp_socket):
         #SYN
         if flags_field == 0b001:
             print(f"Received SYN from {addr}. Sending SYN|ACK...")
+            #Log the SYN received
+            with open(log_location, 'a') as log_file:
+                log_file.write(f"RECV: Sequence Num: {sequence_number} ACK Num: {ack_number} [SYN]\n")
+                
+            #Log the SYN|ACK sent
+            with open(log_location, 'a') as log_file:
+                log_file.write(f"SEND: Sequence Num: {sequence_number} ACK Num: {ack_number} [SYN|ACK]\n")
             sequence_number = struct.unpack('!I', header[:4])[0]
             ack_number = struct.unpack('!I', header[4:8])[0] + 1
             syn_ack_packet = create_header(sequence_number+1, ack_number, 0b011)
@@ -56,6 +63,9 @@ def handle_client(data, addr, log_location, udp_socket):
         #ACK
         elif flags_field == 0b010:
             print(f"Received ACK from {addr}. Handshake complete and the connection is established.")
+            #Log the ACK received
+            with open(log_location, 'a') as log_file:
+                log_file.write(f"RECV: Sequence Num: {sequence_number} ACK Num: {ack_number} [ACK]\n")
 
             #Checks to make sure the length is sufficient
             if len(data) > headerLength:
@@ -78,7 +88,7 @@ def handle_client(data, addr, log_location, udp_socket):
                             log_file.write(f"Motion detected at {time.strftime('%Y-%m-%d-%H:%M:%S')}\n")
 
                         #Blink the LED
-                        blink_times = message.get("num_blinks", 5)
+                        blink_times = message.get("num_blinks", 3)
                         blink_duration = message.get("duration", 0.5)
                         blink_led(blink_duration, blink_times)
 
