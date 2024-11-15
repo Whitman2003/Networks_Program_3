@@ -64,6 +64,8 @@ def handle_client(data, addr, log_location, udp_socket):
         #ACK
         elif flags_field == 0b010:
             print(f"Received ACK from {addr}. Handshake complete and the connection is established.")
+            sequence_number = struct.unpack('!I', header[:4])[0]
+            ack_number = struct.unpack('!I', header[4:8])[0] + 1
             #Log the ACK received
             with open(log_location, 'a') as log_file:
                 log_file.write(f"RECV: Sequence Num: {sequence_number} ACK Num: {ack_number} [ACK]\n")
