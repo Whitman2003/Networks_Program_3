@@ -47,18 +47,19 @@ def handle_client(data, addr, log_location, udp_socket):
 
         #SYN
         if flags_field == 0b001:
-            print(f"Received SYN from {addr}. Sending SYN|ACK...")
-            #Log the SYN received
-            with open(log_location, 'a') as log_file:
-                log_file.write(f"RECV: Sequence Num: {sequence_number} ACK Num: {ack_number} [SYN]\n")
-                
-            #Log the SYN|ACK sent
-            with open(log_location, 'a') as log_file:
-                log_file.write(f"SEND: Sequence Num: {sequence_number} ACK Num: {ack_number} [SYN|ACK]\n")
+            print(f"Received SYN from {addr}. Sending SYN|ACK...")              
             sequence_number = struct.unpack('!I', header[:4])[0]
             ack_number = struct.unpack('!I', header[4:8])[0] + 1
             syn_ack_packet = create_header(sequence_number+1, ack_number, 0b011)
             udp_socket.sendto(syn_ack_packet, addr)
+            
+            #Log the SYN received
+            with open(log_location, 'a') as log_file:
+                log_file.write(f"RECV: Sequence Num: {sequence_number} ACK Num: {ack_number} [SYN]\n")
+            
+            #Log the SYN|ACK sent
+            with open(log_location, 'a') as log_file:
+                log_file.write(f"SEND: Sequence Num: {sequence_number+1} ACK Num: {ack_number} [SYN|ACK]\n")
 
         #ACK
         elif flags_field == 0b010:
