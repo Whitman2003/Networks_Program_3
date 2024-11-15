@@ -8,7 +8,6 @@
 import argparse
 import socket
 import sys
-import threading
 import json
 import struct
 import time
@@ -21,30 +20,24 @@ PIR_PIN = 17
 #Set the GPIO pin
 GPIO.setup(PIR_PIN, GPIO.IN)
 
-def create_header(sequence_number, ack_number, flags):
-    header = struct.pack('!II I', sequence_number, ack_number, flags)
-    return header
-
 #Send the motion signal
 def send_motion(server_ip, server_port, log_location, sock):
+    #Set variables
     sequence_number = 1000
-    ack_number = 1000
-
-    print("Motion detected.")
+    ack_number = 1001
     motion_data = {"type": "MOTION", "message": "MOTION"}
 
     #Log the motion
     with open(log_location, 'a') as log_file:
         log_file.write(f"Motion detected at {time.strftime('%Y-%m-%d-%H:%M:%S')}\n")
 
+    #Set the message
     message = json.dumps(motion_data).encode('utf-8')
-    print(f"Motion data: {message}")
-
     flags = 0b010
     header = create_header(sequence_number, ack_number, flags)
-
     full_message = header + message
 
+    #Send the motion data
     if sock.fileno() != -1:
         try:
             print("Sending motion data...")
@@ -60,7 +53,7 @@ def send_motion(server_ip, server_port, log_location, sock):
 def wait(server_ip, server_port, log_location, sock):
     print("Waiting for motion...")
     while True:
-        print(f"PIR input: {GPIO.input(PIR_PIN)}")
+        #Send when motion is detected
         if GPIO.input(PIR_PIN):
             send_motion(server_ip, server_port, log_location, sock)
             time.sleep(2)
@@ -105,7 +98,7 @@ def initiate_handshake(server_ip, server_port, duration, num_blinks):
 
     #SYN or Initial
     sequence_number = 1000
-    ack_number = 0
+    ack_number = 1001
     syn_packet = create_header(sequence_number, ack_number, flags=0b001)
     print("Sending SYN...")
     send_packet(sock, syn_packet, server_ip, server_port)

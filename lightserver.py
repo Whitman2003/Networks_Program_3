@@ -8,7 +8,6 @@
 import argparse
 import socket
 import sys
-import threading
 import json
 import RPi.GPIO as GPIO
 import time
@@ -19,32 +18,32 @@ LED_PIN = 18
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(LED_PIN, GPIO.OUT)
 
+#Function to blink the LED
 def blink_led(duration, num_blinks):
     #Blinking the LED
-    print("Blinking LED")
     for _ in range(num_blinks):
         GPIO.output(LED_PIN, GPIO.HIGH)
         time.sleep(duration)
         GPIO.output(LED_PIN, GPIO.LOW)
         time.sleep(duration)
 
+#Function to create the header
 def create_header(sequence_number, ack_number, flags):
     header = struct.pack('!II I', sequence_number, ack_number, flags)
     return header
 
+#Function to handle data sent by the client
 def handle_client(data, addr, log_location, udp_socket):
-    print("Entered handle_client")
     try:
-        #Decodes the data and parse the JSON file
         headerLength = 12
 
+        #Check if the data is too short
         if len(data) < headerLength:
             raise ValueError("Data is too short for JSON")
 
+        #Sets the header and flags
         header = data[:headerLength]
         flags_field = struct.unpack('!I', header[8:12])[0] & 0b111
-
-        print(f"Check flags: {flags_field}")
 
         #SYN
         if flags_field == 0b001:
@@ -56,24 +55,25 @@ def handle_client(data, addr, log_location, udp_socket):
 
         #ACK
         elif flags_field == 0b010:
-            print(f"Received ACK from {addr}. Handshake complete.")
-            print("Connection established.")
+            print(f"Received ACK from {addr}. Handshake complete and the connection is established.")
 
-            print(f"Length of data: {len(data)}")
+            #Checks to make sure the length is sufficient
             if len(data) > headerLength:
                 json_payload = data[headerLength:]
 
                 #Decode
                 try:
                     message = json.loads(json_payload.decode('utf-8'))
-                    print(f"Received message: {message}")
 
+                    #Logs
                     with open(log_location, 'a') as log_file:
                         log_file.write(f"Received message: {message}\n")
 
-                    print(f"Message type: {message.get('type')}")
+                    #If motion is detected
                     if message.get("type") == "MOTION":
                         print("Motion Detected.")
+
+                        #Logs the motion
                         with open(log_location, 'a') as log_file:
                             log_file.write(f"Motion detected at {time.strftime('%Y-%m-%d-%H:%M:%S')}\n")
 
@@ -84,6 +84,7 @@ def handle_client(data, addr, log_location, udp_socket):
 
                         response = json.dumps({"status": "200 OK", "message": "Motion Detected"})
 
+                    #If data is received
                     elif message.get("type") == "DATA":
                         print("Received data.")
                         duration = message.get("duration")
@@ -99,8 +100,8 @@ def handle_client(data, addr, log_location, udp_socket):
                     else:
                         response = json.dumps({"status": "400 Bad Request", "message": "Invalid message type."})
 
+                    #Send data back to the client
                     udp_socket.sendto(response.encode('utf-8'), addr)
-                    print(f"Sent response to {addr}: {response}")
 
                 except json.JSONDecodeError:
                     print("Invalid JSON data.")
@@ -129,10 +130,6 @@ def main():
     #Retrieve the arguments
     port = args.port
     log_location = args.log_location
-
-    #Print the arguments
-    print(f"Port: {port}")
-    print(f"Log Location: {log_location}")
 
     #Validate the port number
     if not (1 <= port <= 65535):
