@@ -21,8 +21,15 @@ PIR_PIN = 17
 #Set the GPIO pin
 GPIO.setup(PIR_PIN, GPIO.IN)
 
+def create_header(sequence_number, ack_number, flags):
+    header = struct.pack('!II I', sequence_number, ack_number, flags)
+    return header
+
 #Send the motion signal
 def send_motion(server_ip, server_port, log_location, sock):
+    sequence_number = 1000
+    ack_number = 1000
+
     print("Motion detected.")
     motion_data = {"type": "MOTION", "message": "MOTION"}
 
@@ -33,10 +40,15 @@ def send_motion(server_ip, server_port, log_location, sock):
     message = json.dumps(motion_data).encode('utf-8')
     print(f"Motion data: {message}")
 
+    flags = 0b010
+    header = create_header(sequence_number, ack_number, flags)
+
+    full_message = header + message
+
     if sock.fileno() != -1:
         try:
             print("Sending motion data...")
-            sock.sendto(message, (server_ip, server_port))
+            sock.sendto(full_message, (server_ip, server_port))
             print("Motion data sent.")
         except Exception as e:
             print("Error sending motion data. {e}")
